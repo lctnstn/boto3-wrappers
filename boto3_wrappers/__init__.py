@@ -1,2 +1,2 @@
 __all__ = ['cloudformation']
-__version__ = "0.0"
+version = "0.1.1"
