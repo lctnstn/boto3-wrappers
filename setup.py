@@ -1,5 +1,7 @@
 from setuptools import setup, find_packages
 
+import boto3_wrappers
+
 with open('requirements.txt') as f:
     requirements = f.read().splitlines()
 
@@ -11,7 +13,7 @@ setup(
     author='Nathan Lichtenstein',
     author_email='nathan@lctnstn.com',
     url='https://github.com/lctnstn/boto3-wrappers',
-    version='0.1',
+    version=boto3_wrappers.version,
     description='Wrapper classes for boto3.',
     packages=find_packages(exclude=('tests', 'docs')),
 )
