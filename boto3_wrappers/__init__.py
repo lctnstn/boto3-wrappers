@@ -1,2 +1,2 @@
-__all__ = ['cloudformation']
-version = "0.2"
+__all__ = ['client', 'cloudformation']
+version = "0.2.1"

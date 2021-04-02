@@ -1,15 +1,8 @@
-import boto3
-import botocore
-import threading
-import time
-from loguru import logger
+from .client import *
 
-class cloudformation:
+class cloudformation(client):
     def __init__(self, **kwargs):
-        self._name = kwargs['name']
-        self._number = kwargs['number']
-        self._ignore_drift = kwargs['ignore_drift']
-        self._client = kwargs['client']
+        super().__init__(**kwargs)
 
     def __del__(self):
         logger.debug(f'{self._name} complete')
