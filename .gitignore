@@ -104,11 +104,14 @@ celerybeat.pid
 # Environments
 .env
 .venv
+.boto3-wrappers-venv
 env/
 venv/
+boto3-wrappers-venv/
 ENV/
 env.bak/
 venv.bak/
+boto3-wrappers-venv.bak/
 
 # Spyder project settings
 .spyderproject

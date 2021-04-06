@@ -7,7 +7,7 @@ with open('requirements.txt') as f:
 
 setup(
     name='boto3_wrappers',
-    long_description="Helpful wrappers for boto3.",
+    long_description="Wrapper classes for boto3.",
     long_description_content_type="text/markdown",
     install_requires=requirements,
     author='Nathan Lichtenstein',

@@ -1,23 +1,27 @@
-import boto3
-import botocore
-import threading
-import time
-from loguru import logger
+from .client import *
 
-class cloudformation:
+class cloudformation(client):
     def __init__(self, **kwargs):
-        self._name = kwargs['name']
-        self._number = kwargs['number']
-        self._ignore_drift = kwargs['ignore_drift']
-        self._client = kwargs['client']
+        super().__init__(**kwargs)
+        self.client = self._get_client('cloudformation')
+        if 'ignore_drift' not in kwargs.keys() or (
+            kwargs['ignore_drift'] not in [True, False]
+        ):
+            check_ignore = input('Ignore drift [Yes/No]: ')
+            if check_ignore == 'Yes':
+                self._ignore_drift = True
+            else:
+                self._ignore_drift = False
+        else:
+            self._ignore_drift = kwargs['ignore_drift']
 
     def __del__(self):
-        logger.debug(f'{self._name} complete')
+        logger.info(f'{self._name} complete')
 
     def create_update(self, **kwargs):
         # First try to create the stack new.
         try:
-            create_stack = self._client.create_stack(
+            create_stack = self.client.create_stack(
                 StackName=kwargs['stack'],
                 TemplateBody=kwargs['template'],
                 Parameters=kwargs['cli_input']['Parameters'],
@@ -35,11 +39,11 @@ class cloudformation:
             # The AlreadyExistsException shows when a stack with the same name already exists, begin update process.
             if create_error.response['Error']['Code'] == 'AlreadyExistsException':
                 # Detect drift in stack before updating.
-                detect_drift = self._client.detect_stack_drift(StackName=kwargs['stack'])
+                detect_drift = self.client.detect_stack_drift(StackName=kwargs['stack'])
                 drift_detect_id = detect_drift["StackDriftDetectionId"]
                 drift_detect_status = ""
                 while drift_detect_status not in ["DETECTION_COMPLETE", "DETECTION_FAILED"]:
-                    check_drift_detect_status = self._client.describe_stack_drift_detection_status(StackDriftDetectionId=drift_detect_id)
+                    check_drift_detect_status = self.client.describe_stack_drift_detection_status(StackDriftDetectionId=drift_detect_id)
                     drift_detect_status = check_drift_detect_status["DetectionStatus"]
                     time.sleep(1) # Avoid throttling
                 # If there is no drift or if we're ignoring drift, proceed with update,
@@ -47,7 +51,7 @@ class cloudformation:
                     if not self._ignore_drift:
                         logger.info(f'No drift detected in {self._name}')
                     try:
-                        update_stack = self._client.update_stack(
+                        update_stack = self.client.update_stack(
                             StackName=kwargs['stack'],
                             TemplateBody=kwargs['template'],
                             Parameters=kwargs['cli_input']['Parameters'],
@@ -85,7 +89,7 @@ class cloudformation:
         stack_status = ""
         # Any of these status returns means we need to wait and check again.
         while stack_status in ["", 'CREATE_IN_PROGRESS', 'ROLLBACK_IN_PROGRESS', 'UPDATE_IN_PROGRESS', 'UPDATE_COMPLETE_CLEANUP_IN_PROGRESS', 'UPDATE_ROLLBACK_IN_PROGRESS', 'UPDATE_ROLLBACK_COMPLETE_CLEANUP_IN_PROGRESS']:
-            describe = self._client.describe_stacks(StackName=self._stack_id)
+            describe = self.client.describe_stacks(StackName=self._stack_id)
             stack_status = describe['Stacks'][0]['StackStatus']
             time.sleep(5) # Avoid throttling
 
@@ -100,13 +104,13 @@ class cloudformation:
     def delete(self, **kwargs):
         # See if the stack exists
         try:
-            find_stack = self._client.describe_stacks(
+            find_stack = self.client.describe_stacks(
                 StackName=kwargs['stack']
             )
             if find_stack['Stacks']:
                 stack_id = find_stack['Stacks'][0]['StackId']
                 logger.info(f'Deleting {kwargs["stack"]} from {self._name}')
-                delete_stack = self._client.delete_stack(
+                delete_stack = self.client.delete_stack(
                     StackName=kwargs['stack']
                 )
                 self._stack_id=stack_id
@@ -119,7 +123,7 @@ class cloudformation:
         stack_status = ""
         # Look through all stacks
         while stack_status in ["", 'DELETE_IN_PROGRESS']:
-            paginator = self._client.get_paginator('list_stacks')
+            paginator = self.client.get_paginator('list_stacks')
             pages = paginator.paginate()
             for page in pages:
                 for stack in page['StackSummaries']:
