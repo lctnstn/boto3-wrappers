@@ -16,7 +16,7 @@ class cloudformation(client):
             self._ignore_drift = kwargs['ignore_drift']
 
     def __del__(self):
-        logger.debug(f'{self._name} complete')
+        logger.info(f'{self._name} complete')
 
     def create_update(self, **kwargs):
         # First try to create the stack new.
